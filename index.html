@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Men Gift Hub | AI Signals</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            margin: 0;
+            text-align: center;
+        }
+        header {
+            background: #020617;
+            padding: 25px;
+            border-bottom: 2px solid #38bdf8;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .signal-card {
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        .chart-card {
+            background: #1e293b;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 500px;
+            border: 1px solid #334155;
+        }
+        footer { padding: 30px; color: #64748b; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Men Gift Hub</h1>
+        <p>Haqiqiy Vaqtdagi AI Signallari</p>
+    </header>
+
+    <div class="container">
+
+        <div class="signal-card">
+            <h2 style="color: #38bdf8; margin-bottom: 20px;">🤖 AI SIGNALLARI</h2>
+            <p style="color: #94a3b8; margin-top: -15px;">BTC / USDT (MACD tahlili)</p>
+            
+            <div class="tradingview-widget-container" style="margin: 0 auto;">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+                {
+                "interval": "1D",
+                "width": "100%",
+                "isTransparent": true,
+                "height": 400,
+                "symbol": "BINANCE:BTCUSDT",
+                "showIntervalTabs": true,
+                "displayMode": "single",
+                "locale": "uz",
+                "colorTheme": "dark"
+                }
+                </script>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div id="tradingview_chart" style="height: 100%;"></div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>© 2025 Men Gift Hub | Faqat ta'lim maqsadida</p>
+    </footer>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        new TradingView.widget({
+            "autosize": true,
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": "D",
+            "theme": "dark",
+            "style": "1",
+            "locale": "uz",
+            "container_id": "tradingview_chart",
+            "hide_top_toolbar": false,
+            "allow_symbol_change": true,
+            "save_image": false
+        });
+    </script>
+</body>
+  </html>
+  
