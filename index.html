@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Real-Time Price Action</title>
+    <title>Order Block & TBT Scanner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -13,62 +13,66 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .app-container { width: 100%; max-width: 480px; }
+        
         header { padding: 20px 0; text-align: left; width: 100%; }
-        h1 { font-size: 1.5rem; color: var(--primary); }
-        .live-indicator { font-size: 0.7rem; color: var(--buy); margin-left: 8px; display: none; }
-        .search-box { background: var(--card); padding: 15px; border-radius: 12px; display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; background: transparent; border: 1px solid #474d57; border-radius: 8px; color: white; padding: 12px; font-size: 1rem; text-transform: uppercase; }
-        button { background: var(--primary); color: #000; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #resultView { display: none; animation: fadeIn 0.4s ease; }
-        .signal-header { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; border-bottom: 4px solid #474d57; }
-        .signal-header.BUY { border-color: var(--buy); }
-        .signal-header.SELL { border-color: var(--sell); }
-        .price-main { font-size: 2.5rem; font-weight: 800; margin: 5px 0; font-variant-numeric: tabular-nums; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .zones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .zone-card { background: var(--card); padding: 15px; border-radius: 12px; }
-        .label { color: var(--subtext); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
-        .val { font-size: 1rem; font-weight: 600; }
+        h1 { font-size: 1.4rem; color: var(--primary); }
+        .search-box { background: var(--card); padding: 12px; border-radius: 12px; display: flex; gap: 8px; margin-bottom: 15px; }
+        input { flex: 1; background: transparent; border: 1px solid #474d57; border-radius: 8px; color: white; padding: 10px; text-transform: uppercase; }
+        button { background: var(--primary); color: #000; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .signal-header { background: var(--card); padding: 25px; border-radius: 16px; text-align: center; margin-bottom: 15px; border-bottom: 4px solid #474d57; }
+        .signal-header.BUY { border-color: var(--buy); background: rgba(46, 189, 133, 0.1); }
+        .signal-header.SELL { border-color: var(--sell); background: rgba(246, 70, 93, 0.1); }
+        .price-main { font-size: 2.8rem; font-weight: 800; margin: 10px 0; font-variant-numeric: tabular-nums; }
+        
+        .zones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .zone-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #2b3139; }
+        .zone-card.active-buy { border-color: var(--buy); background: rgba(46, 189, 133, 0.05); }
+        .zone-card.active-sell { border-color: var(--sell); background: rgba(246, 70, 93, 0.05); }
+        
+        .label { color: var(--subtext); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px; }
+        .val { font-size: 1rem; font-weight: 700; }
         .val.green { color: var(--buy); }
         .val.red { color: var(--sell); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+        .hit { opacity: 0.2; text-decoration: line-through; transition: 0.5s; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <header>
-        <h1>AI Live Price <span id="liveBadge" class="live-indicator"><i class="fas fa-circle"></i> LIVE</span></h1>
-        <p class="subtitle">Real-time Support/Resistance Analysis</p>
+        <h1>AI Order Block Scanner</h1>
+        <p class="subtitle">Live TBT & Order Block Zones</p>
     </header>
 
     <div class="search-box">
-        <input type="text" id="symbol" placeholder="BTCUSDT, ETHUSDT..." value="BTCUSDT">
+        <input type="text" id="symbol" placeholder="ENSUSDT, BTCUSDT..." value="ENSUSDT">
         <button onclick="startLiveTrack()">START</button>
     </div>
 
-    <div id="resultView">
+    <div id="resultView" style="display:none;">
         <div id="sigBox" class="signal-header">
-            <div id="status" class="status-badge">Analyzing...</div>
+            <div id="status" style="font-weight:900; letter-spacing:2px; font-size:0.8rem;">NEUTRAL</div>
             <div id="mainPrice" class="price-main">$0.00</div>
-            <div id="reason" style="color:var(--subtext); font-size:0.85rem;">Connecting to Exchange...</div>
+            <div id="reason" style="color:var(--subtext); font-size:0.8rem;">Waiting for price to hit Order Block...</div>
         </div>
 
         <div class="zones-grid">
-            <div class="zone-card">
-                <div class="label">Buy Zone</div>
-                <div id="buyZone" class="val green">--</div>
+            <div class="zone-card" id="card-buy">
+                <div class="label">BUY ZONE (Bullish OB)</div>
+                <div id="buyVal" class="val green">--</div>
             </div>
-            <div class="zone-card">
-                <div class="label">Sell Zone</div>
-                <div id="sellZone" class="val red">--</div>
+            <div class="zone-card" id="card-sell">
+                <div class="label">SELL ZONE (Bearish OB)</div>
+                <div id="sellVal" class="val red">--</div>
             </div>
-            <div class="zone-card">
-                <div class="label">TP 1</div>
+            <div class="zone-card" id="card-tp1">
+                <div class="label">TBT TARGET 1</div>
                 <div id="tp1" class="val">--</div>
             </div>
-            <div class="zone-card">
-                <div class="label">TP 2</div>
+            <div class="zone-card" id="card-tp2">
+                <div class="label">TBT TARGET 2</div>
                 <div id="tp2" class="val">--</div>
             </div>
         </div>
@@ -77,65 +81,77 @@
 
 <script>
     let socket = null;
+    let data = { buyMin: 0, buyMax: 0, sellMin: 0, sellMax: 0, tp1: 0, tp2: 0, tp1Hit: false, tp2Hit: false };
 
     function startLiveTrack() {
         const symbol = document.getElementById('symbol').value.trim().toLowerCase();
         if(!symbol) return;
-
-        // Close existing connection if any
         if(socket) socket.close();
-
         document.getElementById('resultView').style.display = 'block';
-        document.getElementById('liveBadge').style.display = 'inline';
 
-        // Connect to Binance WebSocket
-        // Use @ticker to get 24hr price changes or @trade for single price points
         socket = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@ticker`);
-
         socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const price = parseFloat(data.c); // "c" is current close price
-            
-            updateLiveAnalysis(price, symbol.toUpperCase());
-        };
-
-        socket.onerror = (err) => {
-            document.getElementById('reason').innerText = "Connection Error. Try BTCUSDT.";
+            const raw = JSON.parse(event.data);
+            const price = parseFloat(raw.c);
+            if(data.buyMin === 0) initZones(price);
+            updateApp(price);
         };
     }
 
-    function updateLiveAnalysis(price, symbol) {
-        // AI Logic: Dynamic Calculation of Zones
-        const support = price * 0.985; // Support at -1.5%
-        const resist = price * 1.02;   // Resistance at +2%
-        const tp1 = price * 1.015;     // Target 1
-        const tp2 = price * 1.04;      // Target 2
+    function initZones(price) {
+        // Defining Order Block "Boxes" (Zones) based on screenshot logic
+        data = {
+            buyMin: price * 0.975, buyMax: price * 0.985,
+            sellMin: price * 1.015, sellMax: price * 1.025,
+            tp1: price * 1.01, tp2: price * 1.03,
+            tp1Hit: false, tp2Hit: false
+        };
+        document.getElementById('buyVal').innerText = `$${data.buyMin.toFixed(2)} - $${data.buyMax.toFixed(2)}`;
+        document.getElementById('sellVal').innerText = `$${data.sellMin.toFixed(2)} - $${data.sellMax.toFixed(2)}`;
+        document.getElementById('tp1').innerText = `$${data.tp1.toFixed(2)}`;
+        document.getElementById('tp2').innerText = `$${data.tp2.toFixed(2)}`;
+    }
 
-        // Update UI
+    function updateApp(price) {
         document.getElementById('mainPrice').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('buyZone').innerText = "$" + support.toFixed(2);
-        document.getElementById('sellZone').innerText = "$" + resist.toFixed(2);
-        document.getElementById('tp1').innerText = "$" + tp1.toFixed(2);
-        document.getElementById('tp2').innerText = "$" + tp2.toFixed(2);
-
-        // Simple Signal based on price position
-        let signal = "NEUTRAL";
-        let reason = "Scanning market structure...";
         
-        if(price <= support * 1.005) {
-            signal = "BUY";
-            reason = `BoS confirmed at ${symbol} support levels.`;
-        } else if (price >= resist * 0.995) {
-            signal = "SELL";
-            reason = `Resistance rejection at daily high.`;
+        const status = document.getElementById('status');
+        const sigBox = document.getElementById('sigBox');
+        const reason = document.getElementById('reason');
+
+        // Check if Price is inside the BUY ZONE Order Block
+        if (price >= data.buyMin && price <= data.buyMax) {
+            status.innerText = "BUY";
+            sigBox.className = "signal-header BUY";
+            reason.innerText = "Inside Bullish Order Block. Potential Reversal.";
+            document.getElementById('card-buy').classList.add('active-buy');
+        } 
+        // Check if Price is inside the SELL ZONE Order Block
+        else if (price >= data.sellMin && price <= data.sellMax) {
+            status.innerText = "SELL";
+            sigBox.className = "signal-header SELL";
+            reason.innerText = "Inside Bearish Order Block. Supply found.";
+            document.getElementById('card-sell').classList.add('active-sell');
+        } 
+        else {
+            status.innerText = "NEUTRAL";
+            sigBox.className = "signal-header";
+            reason.innerText = "Scanning Market Structure...";
+            document.getElementById('card-buy').classList.remove('active-buy');
+            document.getElementById('card-sell').classList.remove('active-sell');
         }
 
-        const status = document.getElementById('status');
-        status.innerText = signal;
-        status.style.background = signal === "BUY" ? "var(--buy)" : (signal === "SELL" ? "var(--sell)" : "#474d57");
-        document.getElementById('sigBox').className = `signal-header ${signal}`;
-        document.getElementById('reason').innerText = reason;
+        // TBT Target Vanishing
+        if (!data.tp1Hit && price >= data.tp1) {
+            data.tp1Hit = true;
+            document.getElementById('card-tp1').classList.add('hit');
+        }
+        if (!data.tp2Hit && price >= data.tp2) {
+            data.tp2Hit = true;
+            document.getElementById('card-tp2').classList.add('hit');
+        }
     }
 </script>
 </body>
-</html>
+                                                   </html>
+    
